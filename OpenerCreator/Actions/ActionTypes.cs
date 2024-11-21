@@ -1,4 +1,4 @@
-using LuminaAction = Lumina.Excel.GeneratedSheets.Action;
+using LuminaAction = Lumina.Excel.Sheets.Action;
 
 
 namespace OpenerCreator.Actions;
@@ -24,7 +24,7 @@ public static class ActionTypesExtension
 
     public static ActionTypes GetType(LuminaAction action)
     {
-        return action.ActionCategory.Row switch
+        return action.ActionCategory.RowId switch
         {
             2 or 3 => ActionTypes.GCD,
             4 => ActionTypes.OGCD,

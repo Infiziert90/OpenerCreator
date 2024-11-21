@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Dalamud.Interface.Textures;
 using OpenerCreator.Helpers;
-using LuminaAction = Lumina.Excel.GeneratedSheets.Action;
+using LuminaAction = Lumina.Excel.Sheets.Action;
 
 namespace OpenerCreator.Actions;
 
@@ -46,7 +46,7 @@ public class PvEActions : IActionManager
         return id >= 0
                    ? id == IActionManager.CatchAllActionId
                          ? IActionManager.CatchAllActionName
-                         : actionsSheetDictionary.GetValueOrDefault((uint)id)?.Name.ToString() ??
+                         : actionsSheetDictionary.GetValueOrDefault((uint)id).Name.ToString() ??
                            IActionManager.OldActionName
                    : GroupOfActions.TryGetDefault(id, out var group)
                        ? group.Name
@@ -85,7 +85,7 @@ public class PvEActions : IActionManager
     {
         return id == IActionManager.CatchAllActionId
                    ? IActionManager.GetCatchAllIcon
-                   : actionsSheetDictionary.GetValueOrDefault(id)?.Icon;
+                   : actionsSheetDictionary.GetValueOrDefault(id).Icon;
     }
 
 
@@ -96,7 +96,7 @@ public class PvEActions : IActionManager
                .Where(a =>
                           a.Name.ToString().Contains(name, StringComparison.CurrentCultureIgnoreCase)
                           && (ActionTypesExtension.GetType(a) == actionType || actionType == ActionTypes.ANY)
-                          && ((a.ClassJobCategory?.Value?.Name != null
+                          && ((a.ClassJobCategory.ValueNullable != null
                                && a.ClassJobCategory.Value.Name.ToString().Contains(job.ToString()))
                               || job == Jobs.ANY)
                )
@@ -107,9 +107,9 @@ public class PvEActions : IActionManager
 
     public static bool IsPvEAction(LuminaAction a)
     {
-        return a.ActionCategory.Row is 2 or 3 or 4          // GCD or Weaponskill or oGCD
+        return a.ActionCategory.RowId is 2 or 3 or 4          // GCD or Weaponskill or oGCD
                && a is { IsPvP: false, ClassJobLevel: > 0 } // not an old action
-               && a.ClassJobCategory.Row != 0;              // not an old action
+               && a.ClassJobCategory.RowId != 0;              // not an old action
     }
 
     public static ISharedImmediateTexture GetIconTexture(uint id)

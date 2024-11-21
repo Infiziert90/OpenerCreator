@@ -6,7 +6,7 @@ using Lumina.Excel;
 using OpenerCreator.Actions;
 using OpenerCreator.Helpers;
 using OpenerCreator.Managers;
-using LuminaAction = Lumina.Excel.GeneratedSheets.Action;
+using LuminaAction = Lumina.Excel.Sheets.Action;
 
 
 namespace OpenerCreator.Hooks;
@@ -93,7 +93,7 @@ public class UsedActionHook : IDisposable
         var action = sheet!.GetRow((uint)actionId);
         var isActionTrueNorth = actionId == PvEActions.TrueNorthId;
         var analyseWhenTrueNorth = !(ignoreTrueNorth && isActionTrueNorth); //nand
-        if (action != null && PvEActions.IsPvEAction(action) && analyseWhenTrueNorth)
+        if (PvEActions.IsPvEAction(action) && analyseWhenTrueNorth)
         {
             if (nActions == 0) // Opener not defined or fully processed
             {
