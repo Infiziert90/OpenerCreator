@@ -16,12 +16,12 @@ internal struct Countdown()
     private static readonly Vector2 CountdownNumberSize = new(240, 320);
 
     private readonly ISharedImmediateTexture countdownGo =
-        OpenerCreator.TextureProvider.GetFromGame($"ui/icon/121000/{LanguageCode}/121841_hr1.tex");
+        Plugin.TextureProvider.GetFromGame($"ui/icon/121000/{LanguageCode}/121841_hr1.tex");
 
     private readonly ISharedImmediateTexture countdownNumbers =
-        OpenerCreator.TextureProvider.GetFromGame("ui/uld/ScreenInfo_CountDown_hr1.tex");
+        Plugin.TextureProvider.GetFromGame("ui/uld/ScreenInfo_CountDown_hr1.tex");
 
-    private static readonly string LanguageCode = OpenerCreator.DataManager.Language switch
+    private static readonly string LanguageCode = Plugin.DataManager.Language switch
     {
         ClientLanguage.French => "fr",
         ClientLanguage.German => "de",
@@ -33,13 +33,13 @@ internal struct Countdown()
 
     internal void DrawCountdown()
     {
-        if (OpenerCreator.Config.IsCountdownEnabled == false || countdownStart == null ||
-            OpenerCreator.ClientState.LocalPlayer!.StatusFlags.ToString()
+        if (Plugin.Config.IsCountdownEnabled == false || countdownStart == null ||
+            Plugin.ClientState.LocalPlayer!.StatusFlags.ToString()
                          .Contains(StatusFlags.InCombat.ToString()))
             return;
 
         var foregroundDrawList = ImGui.GetForegroundDrawList();
-        var timer = OpenerCreator.Config.CountdownTime - (countdownStart.ElapsedMilliseconds / 1000.0f);
+        var timer = Plugin.Config.CountdownTime - (countdownStart.ElapsedMilliseconds / 1000.0f);
         var ceil = (float)Math.Ceiling(timer);
         const float uSpacing = 1.0f / 6.0f;
 

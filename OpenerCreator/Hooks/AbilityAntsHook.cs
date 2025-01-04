@@ -11,7 +11,7 @@ public unsafe class AbilityAntsHook
     public AbilityAntsHook()
     {
         IsActionHighlightedHook =
-            OpenerCreator.GameInteropProvider.HookFromAddress<ActionManager.Delegates.IsActionHighlighted>(
+            Plugin.GameInteropProvider.HookFromAddress<ActionManager.Delegates.IsActionHighlighted>(
                 ActionManager.MemberFunctionPointers.IsActionHighlighted, HandleIsActionHighlighted);
     }
 
@@ -29,7 +29,6 @@ public unsafe class AbilityAntsHook
 
     public void Dispose()
     {
-        IsActionHighlightedHook?.Disable();
         IsActionHighlightedHook?.Dispose();
     }
 

@@ -8,7 +8,7 @@ public class ActionsMock : IActionManager
 {
     public const int OldAction1 = 3640;
 
-    private readonly IEnumerable<int> oldActions = new[] { OldAction1 };
+    private readonly IEnumerable<int> oldActions = [OldAction1];
 
     public string GetActionName(int action)
     {

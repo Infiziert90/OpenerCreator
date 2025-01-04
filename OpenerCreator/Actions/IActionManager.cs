@@ -9,7 +9,7 @@ public interface IActionManager
     static string OldActionName => "Old Action";
 
     static ISharedImmediateTexture GetUnknownActionTexture =>
-        OpenerCreator.TextureProvider.GetFromGame("ui/icon/000000/000786_hr1.tex");
+        Plugin.TextureProvider.GetFromGame("ui/icon/000000/000786_hr1.tex");
 
     static ushort GetCatchAllIcon => 405;
 

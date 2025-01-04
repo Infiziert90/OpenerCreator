@@ -1,12 +1,14 @@
 using System;
 using System.Collections.Generic;
-using System.Runtime.InteropServices;
+using System.Numerics;
 using Dalamud.Hooking;
+using FFXIVClientStructs.FFXIV.Client.Game.Character;
+using FFXIVClientStructs.FFXIV.Client.Game.Object;
 using Lumina.Excel;
 using OpenerCreator.Actions;
 using OpenerCreator.Helpers;
 using OpenerCreator.Managers;
-using LuminaAction = Lumina.Excel.GeneratedSheets.Action;
+using Action = Lumina.Excel.Sheets.Action;
 
 
 namespace OpenerCreator.Hooks;
@@ -15,9 +17,9 @@ public class UsedActionHook : IDisposable
 {
     private const int MaxItemCount = 50;
 
-    private readonly ExcelSheet<LuminaAction>? sheet = OpenerCreator.DataManager.GetExcelSheet<LuminaAction>();
+    private readonly ExcelSheet<Action>? sheet = Plugin.DataManager.GetExcelSheet<Action>();
     private readonly List<int> used = new(MaxItemCount);
-    private readonly Hook<UsedActionDelegate>? usedActionHook;
+    private readonly Hook<ActionEffectHandler.Delegates.Receive>? usedActionHook;
     private Action<int> currentIndex = _ => { };
     private bool ignoreTrueNorth;
 
@@ -27,14 +29,9 @@ public class UsedActionHook : IDisposable
     private Action<int> wrongAction = _ => { };
 
 
-    public UsedActionHook()
+    public unsafe UsedActionHook()
     {
-        // credits to Tischel for the original sig
-        // https://github.com/Tischel/ActionTimeline/blob/master/ActionTimeline/Helpers/TimelineManager.cs
-        usedActionHook = OpenerCreator.GameInteropProvider.HookFromSignature<UsedActionDelegate>(
-            "40 55 56 57 41 54 41 55 41 56 48 8D AC 24",
-            DetourUsedAction
-        );
+        usedActionHook = Plugin.GameInteropProvider.HookFromAddress<ActionEffectHandler.Delegates.Receive>(ActionEffectHandler.MemberFunctionPointers.Receive, DetourUsedAction);
     }
 
     public void Dispose()
@@ -81,19 +78,18 @@ public class UsedActionHook : IDisposable
         used.Clear();
     }
 
-    private void DetourUsedAction(
-        uint sourceId, IntPtr sourceCharacter, IntPtr pos, IntPtr effectHeader, IntPtr effectArray, IntPtr effectTrail)
+    private unsafe void DetourUsedAction(uint casterEntityId, Character* casterPtr, Vector3* targetPos, ActionEffectHandler.Header* header, ActionEffectHandler.TargetEffects* effects, GameObjectId* targetEntityIds)
     {
-        usedActionHook?.Original(sourceId, sourceCharacter, pos, effectHeader, effectArray, effectTrail);
+        usedActionHook?.Original(casterEntityId, casterPtr, targetPos, header, effects, targetEntityIds);
 
-        var player = OpenerCreator.ClientState.LocalPlayer;
-        if (player == null || sourceId != player.EntityId) return;
+        var player = Plugin.ClientState.LocalPlayer;
+        if (player == null || casterEntityId != player.EntityId) return;
 
-        var actionId = Marshal.ReadInt32(effectHeader, 0x8);
-        var action = sheet!.GetRow((uint)actionId);
+        var actionId = header->ActionId;
+        var ok = sheet!.TryGetRow(actionId, out var actionRow);
         var isActionTrueNorth = actionId == PvEActions.TrueNorthId;
         var analyseWhenTrueNorth = !(ignoreTrueNorth && isActionTrueNorth); //nand
-        if (action != null && PvEActions.IsPvEAction(action) && analyseWhenTrueNorth)
+        if (ok && PvEActions.IsPvEAction(actionRow) && analyseWhenTrueNorth)
         {
             if (nActions == 0) // Opener not defined or fully processed
             {
@@ -105,13 +101,13 @@ public class UsedActionHook : IDisposable
             var loadedLength = OpenerManager.Instance.Loaded.Count;
             var index = loadedLength - nActions;
             var intendedAction = OpenerManager.Instance.Loaded[index];
-            if (index + 1 < OpenerManager.Instance.Loaded.Count && OpenerCreator.Config.AbilityAnts)
+            if (index + 1 < OpenerManager.Instance.Loaded.Count && Plugin.Config.AbilityAnts)
                 updateAbilityAnts(OpenerManager.Instance.Loaded[index + 1]);
             var intendedName = PvEActions.Instance.GetActionName(intendedAction);
 
             currentIndex(index);
 
-            if (OpenerCreator.Config.StopAtFirstMistake &&
+            if (Plugin.Config.StopAtFirstMistake &&
                 !OpenerManager.Instance.AreActionsEqual(intendedAction, intendedName, actionId)
                )
             {
@@ -119,7 +115,7 @@ public class UsedActionHook : IDisposable
                 var f = new Feedback();
                 f.AddMessage(
                     Feedback.MessageType.Error,
-                    $"Difference in action {index + 1}: Substituted {intendedName} for {PvEActions.Instance.GetActionName(actionId)}"
+                    $"Difference in action {index + 1}: Substituted {intendedName} for {PvEActions.Instance.GetActionName((int)actionId)}"
                 );
                 provideFeedback(f);
                 StopRecording();
@@ -127,12 +123,9 @@ public class UsedActionHook : IDisposable
             }
 
             // Process the opener
-            used.Add(actionId);
+            used.Add((int)actionId);
             nActions--;
             if (nActions <= 0) Compare();
         }
     }
-
-    private delegate void UsedActionDelegate(
-        uint sourceId, IntPtr sourceCharacter, IntPtr pos, IntPtr effectHeader, IntPtr effectArray, IntPtr effectTrail);
 }

@@ -5,16 +5,31 @@ using Dalamud.Plugin;
 using Dalamud.Plugin.Services;
 using OpenerCreator.Hooks;
 using OpenerCreator.Windows;
+using OpenerCreator.Windows.Config;
 
 namespace OpenerCreator;
 
-public sealed class OpenerCreator : IDalamudPlugin
+public sealed class Plugin : IDalamudPlugin
 {
+    [PluginService] public static IDalamudPluginInterface PluginInterface { get; private set; } = null!;
+    [PluginService] public static ITextureProvider TextureProvider { get; private set; } = null!;
+    [PluginService] public static ICommandManager CommandManager { get; private set; } = null!;
+    [PluginService] public static IGameInteropProvider GameInteropProvider { get; private set; } = null!;
+    [PluginService] public static IDataManager DataManager { get; private set; } = null!;
+    [PluginService] public static IClientState ClientState { get; private set; } = null!;
+    [PluginService] public static IPluginLog PluginLog { get; private set; } = null!;
+
     private const string Command = "/ocrt";
 
     public readonly WindowSystem WindowSystem = new("OpenerCreator");
 
-    public OpenerCreator()
+    private ConfigWindow ConfigWindow { get; init; }
+    private OpenerCreatorWindow OpenerCreatorWindow { get; init; }
+    private UsedActionHook UsedActionHook { get; init; } = new();
+    private AbilityAntsHook AbilityAntsHook { get; init; } = new();
+    public static Configuration Config { get; set; } = null!;
+
+    public Plugin()
     {
         Config = Configuration.Load();
 
@@ -34,35 +49,6 @@ public sealed class OpenerCreator : IDalamudPlugin
             HelpMessage = "Create, save, and practice your openers."
         });
     }
-
-
-    private ConfigWindow ConfigWindow { get; init; }
-    private OpenerCreatorWindow OpenerCreatorWindow { get; init; }
-    private UsedActionHook UsedActionHook { get; init; } = new();
-    private AbilityAntsHook AbilityAntsHook { get; init; } = new();
-    public static Configuration Config { get; set; } = null!;
-
-    [PluginService]
-    public static IDalamudPluginInterface PluginInterface { get; private set; } = null!;
-
-    [PluginService]
-    public static ITextureProvider TextureProvider { get; private set; } = null!;
-
-    [PluginService]
-    public static ICommandManager CommandManager { get; private set; } = null!;
-
-    [PluginService]
-    public static IGameInteropProvider GameInteropProvider { get; private set; } = null!;
-
-    [PluginService]
-    public static IDataManager DataManager { get; private set; } = null!;
-
-    [PluginService]
-    public static IClientState ClientState { get; private set; } = null!;
-
-    [PluginService]
-    public static IPluginLog PluginLog { get; private set; } = null!;
-
     public void Dispose()
     {
         CommandManager.RemoveHandler(Command);

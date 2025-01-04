@@ -15,14 +15,14 @@ public class Configuration : IPluginConfiguration
 
     public static Configuration Load()
     {
-        return OpenerCreator.PluginInterface.ConfigFile.Exists
+        return Plugin.PluginInterface.ConfigFile.Exists
                    ? JsonConvert.DeserializeObject<Configuration>(
-                         File.ReadAllText(OpenerCreator.PluginInterface.ConfigFile.FullName)) ?? new Configuration()
+                         File.ReadAllText(Plugin.PluginInterface.ConfigFile.FullName)) ?? new Configuration()
                    : new Configuration();
     }
 
     public void Save()
     {
-        File.WriteAllText(OpenerCreator.PluginInterface.ConfigFile.FullName, JsonConvert.SerializeObject(this));
+        File.WriteAllText(Plugin.PluginInterface.ConfigFile.FullName, JsonConvert.SerializeObject(this));
     }
 }

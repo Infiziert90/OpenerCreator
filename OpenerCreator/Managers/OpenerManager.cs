@@ -17,9 +17,9 @@ public class OpenerManager(IActionManager actions)
 
     private OpenerManager(IActionManager actions, ValueTuple _) : this(actions)
     {
-        OpenersFile = Path.Combine(OpenerCreator.PluginInterface.ConfigDirectory.FullName, "openers.json");
+        OpenersFile = Path.Combine(Plugin.PluginInterface.ConfigDirectory.FullName, "openers.json");
         openers = LoadOpeners(OpenersFile);
-        defaultOpeners = LoadOpeners(Path.Combine(OpenerCreator.PluginInterface.AssemblyLocation.Directory!.FullName,
+        defaultOpeners = LoadOpeners(Path.Combine(Plugin.PluginInterface.AssemblyLocation.Directory!.FullName,
                                                   "openers.json"));
     }
 
@@ -132,16 +132,16 @@ public class OpenerManager(IActionManager actions)
         intended = actions.GetActionName(intendedId);
         actualId = used[usedIndex];
 
-        return AreActionsEqual(intendedId, intended, actualId);
+        return AreActionsEqual(intendedId, intended, (uint)actualId);
     }
 
-    public bool AreActionsEqual(int intendedId, string intendedName, int actualId)
+    public bool AreActionsEqual(int intendedId, string intendedName, uint actualId)
     {
         if (intendedId < 0)
-            return GroupOfActions.DefaultGroups.First(g => g.HasId(intendedId)).IsMember((uint)actualId);
+            return GroupOfActions.DefaultGroups.First(g => g.HasId(intendedId)).IsMember(actualId);
         return intendedId == actualId ||
                intendedId == IActionManager.CatchAllActionId ||
-               actions.SameActionsByName(intendedName, actualId);
+               actions.SameActionsByName(intendedName, (int) actualId);
     }
 
     private bool ShouldShift(int openerIndex, int size, int usedValue)
@@ -155,12 +155,15 @@ public class OpenerManager(IActionManager actions)
     {
         try
         {
+            if (!File.Exists(path))
+                return new Dictionary<Jobs, Dictionary<string, List<int>>>();
+
             var jsonData = File.ReadAllText(path);
             return JsonSerializer.Deserialize<Dictionary<Jobs, Dictionary<string, List<int>>>>(jsonData)!;
         }
-        catch (Exception e)
+        catch (Exception ex)
         {
-            OpenerCreator.PluginLog.Error("Failed to load Openers", e);
+            Plugin.PluginLog.Error(ex, "Failed to load Openers");
             return new Dictionary<Jobs, Dictionary<string, List<int>>>();
         }
     }
@@ -172,9 +175,9 @@ public class OpenerManager(IActionManager actions)
             var jsonData = JsonSerializer.Serialize(openers);
             File.WriteAllText(OpenersFile, jsonData);
         }
-        catch (Exception e)
+        catch (Exception ex)
         {
-            OpenerCreator.PluginLog.Error("Failed to save Openers", e);
+            Plugin.PluginLog.Error(ex, "Failed to save Openers");
         }
     }
 }

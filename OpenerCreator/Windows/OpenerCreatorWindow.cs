@@ -2,6 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
+using Dalamud.Interface.Utility;
+using Dalamud.Interface.Utility.Raii;
 using Dalamud.Interface.Windowing;
 using ImGuiNET;
 using OpenerCreator.Actions;
@@ -45,7 +47,7 @@ public class OpenerCreatorWindow : Window, IDisposable
         ForceMainWindow = true; // Centre countdown
         SizeConstraints = new WindowSizeConstraints
         {
-            MinimumSize = new Vector2(100, 100),
+            MinimumSize = new Vector2(350, 200),
             MaximumSize = new Vector2(float.MaxValue, float.MaxValue)
         };
 
@@ -62,13 +64,19 @@ public class OpenerCreatorWindow : Window, IDisposable
     public override void Draw()
     {
         DrawActionsGui();
+
         ImGui.Spacing();
-        ImGui.BeginTabBar("OpenerCreatorMainTabBar");
-        DrawOpenerLoaderTab();
-        DrawCreatorTab();
-        DrawRecordActionsTab();
-        DrawInfoTab();
-        ImGui.EndTabBar();
+
+        using (var tabBar = ImRaii.TabBar("OpenerCreatorMainTabBar"))
+        {
+            if (!tabBar.Success)
+                return;
+
+            DrawOpenerLoaderTab();
+            DrawCreatorTab();
+            DrawRecordActionsTab();
+            DrawInfoTab();
+        }
 
         countdown.DrawCountdown();
     }
@@ -82,10 +90,9 @@ public class OpenerCreatorWindow : Window, IDisposable
         var lines = (float)Math.Max(Math.Ceiling(loadedActions.ActionsCount() / (float)iconsPerLine), 1);
 
         var frameW = ImGui.GetContentRegionAvail().X;
-        ImGui.BeginChildFrame(
-            2426787,
-            new Vector2(frameW, (lines * ((IconSize.Y * 1.7f) + spacing.Y)) - spacing.Y + (padding.Y * 2)),
-            ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoScrollWithMouse);
+        using var childFrame = Helper.ChildFrame(2426787, new Vector2(frameW, (lines * ((IconSize.Y * 1.7f) + spacing.Y)) - spacing.Y + (padding.Y * 2)), ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoScrollWithMouse);
+        if (!childFrame.Success)
+            return;
 
         var drawList = ImGui.GetWindowDrawList();
         for (var i = 0; i < lines; i++)
@@ -139,11 +146,15 @@ public class OpenerCreatorWindow : Window, IDisposable
                 if (loadedActions.IsCurrentActionAt(i)) color = 0xFFFF7F50;
                 if (loadedActions.IsWrongActionAt(i)) color = 0xFF6464FF;
 
-                ImGui.BeginChild((uint)i, IconSize with { Y = IconSize.Y * 1.7f });
-                if (!PvEActions.Instance.IsActionOGCD(actionAt))
-                    ImGui.SetCursorPosY(ImGui.GetCursorPosY() + (IconSize.Y * 0.5f));
-                DrawIcon(actionAt, IconSize, color);
-                ImGui.EndChild();
+                using (var child = ImRaii.Child($"{i}##actionIconChild", IconSize with { Y = IconSize.Y * 1.7f }))
+                {
+                    if (child.Success)
+                    {
+                        if (!PvEActions.Instance.IsActionOGCD(actionAt))
+                            ImGui.SetCursorPosY(ImGui.GetCursorPosY() + (IconSize.Y * 0.5f));
+                        DrawIcon(actionAt, IconSize, color);
+                    }
+                }
 
                 if (ImGui.IsItemClicked(ImGuiMouseButton.Left))
                     actionDragAndDrop = i;
@@ -151,20 +162,23 @@ public class OpenerCreatorWindow : Window, IDisposable
                 if (ImGui.IsItemHovered())
                 {
                     if (actionAt >= 0)
-                        ImGui.SetTooltip(PvEActions.Instance.GetActionName(actionAt));
+                    {
+                        Helper.Tooltip(PvEActions.Instance.GetActionName(actionAt));
+                    }
                     else if (GroupOfActions.TryGetDefault(actionAt, out var group))
                     {
                         // ImGui.SetTooltip($"{group.Name}");
-                        ImGui.BeginTooltip();
-                        ImGui.Text(group.Name);
-                        ImGui.Indent();
+                        using var tooltip = ImRaii.Tooltip();
+                        ImGui.TextUnformatted(group.Name);
+
+                        using var indent = ImRaii.PushIndent();
                         foreach (var action in group.Actions)
-                            ImGui.Text(PvEActions.Instance.GetActionName((int)action));
-                        ImGui.Unindent();
-                        ImGui.EndTooltip();
+                            ImGui.TextUnformatted(PvEActions.Instance.GetActionName((int)action));
                     }
                     else
-                        ImGui.SetTooltip($"Invalid action id ({actionAt})");
+                    {
+                        Helper.Tooltip($"Invalid action id ({actionAt})");
+                    }
                 }
 
                 if (ImGui.IsItemClicked(ImGuiMouseButton.Right))
@@ -190,8 +204,7 @@ public class OpenerCreatorWindow : Window, IDisposable
                 }
                 else if (dndTarget > actionDragAndDrop)
                 {
-                    loadedActions.InsertActionAt(dndTarget.Value + 1,
-                                                 loadedActions.GetActionAt(actionDragAndDrop.Value));
+                    loadedActions.InsertActionAt(dndTarget.Value + 1, loadedActions.GetActionAt(actionDragAndDrop.Value));
                     loadedActions.RemoveActionAt(actionDragAndDrop.Value);
                 }
 
@@ -199,45 +212,49 @@ public class OpenerCreatorWindow : Window, IDisposable
             }
         }
 
-        ImGui.Dummy(Vector2.Zero);
-        ImGui.EndChildFrame();
+        ImGuiHelpers.ScaledDummy(0);
     }
 
     private void DrawOpenerLoaderTab()
     {
-        if (!ImGui.BeginTabItem("Loader"))
+        using var tabItem = ImRaii.TabItem("Loader");
+        if (!tabItem.Success)
             return;
 
-        ImGui.BeginChild("###LoadOpeners");
+        using var child = ImRaii.Child("###LoadOpeners");
+        if (!child.Success)
+            return;
+
         var defaultOpeners = OpenerManager.Instance.GetDefaultNames();
         customOpeners = OpenerManager.Instance.GetNames();
 
-        ImGui.BeginTabBar("###DefaultAndCustomTab");
-        DrawOpeners(defaultOpeners, "Default", OpenerManager.Instance.GetDefaultOpener);
-        DrawOpeners(customOpeners, "Saved", OpenerManager.Instance.GetOpener, true);
-        ImGui.EndTabBar();
-
-        ImGui.EndChild();
-        ImGui.EndTabItem();
+        using var tabBar = ImRaii.TabBar("###OpenersTab");
+        if (tabBar.Success)
+        {
+            DrawOpeners(defaultOpeners, "Default", OpenerManager.Instance.GetDefaultOpener);
+            DrawOpeners(customOpeners, "Saved", OpenerManager.Instance.GetOpener, true);
+        }
     }
 
     private void DrawOpeners(
         List<Tuple<Jobs, List<string>>> openers, string prefix, Func<string, Jobs, List<int>> getOpener,
         bool delete = false)
     {
-        if (!ImGui.BeginTabItem($"{prefix} Openers"))
+        using var tabItem = ImRaii.TabItem($"{prefix} Openers");
+        if (!tabItem.Success)
             return;
 
         DrawJobCategoryFilters();
 
         foreach (var openerJob in openers)
+        {
             if (JobsExtensions.FilterBy(jobCategoryFilter, openerJob.Item1))
             {
-                ImGuiHelpers.CollapsingHeader($"{prefix} {openerJob.Item1} Openers", () =>
+                Helper.CollapsingHeader($"{prefix} {openerJob.Item1} Openers", () =>
                 {
                     foreach (var opener in openerJob.Item2)
                     {
-                        ImGui.Text(opener);
+                        ImGui.TextUnformatted(opener);
                         ImGui.SameLine();
                         if (ImGui.Button($"Load##{prefix}#{opener}#{openerJob.Item1}"))
                         {
@@ -258,17 +275,18 @@ public class OpenerCreatorWindow : Window, IDisposable
                     }
                 });
             }
-
-        ImGui.EndTabItem();
+        }
     }
 
     private void DrawCreatorTab()
     {
-        if (!ImGui.BeginTabItem("Creator"))
+        using var tabItem = ImRaii.TabItem("Creator");
+        if (!tabItem.Success)
             return;
 
-        ImGui.BeginChild("###AllActions",
-                         new Vector2(0, ImGui.GetContentRegionAvail().Y - ImGui.GetStyle().WindowPadding.Y));
+        using var child = ImRaii.Child("###AllActions", new Vector2(0, ImGui.GetContentRegionAvail().Y - ImGui.GetStyle().WindowPadding.Y));
+        if (!child.Success)
+            return;
 
         ImGui.InputText("Opener name", ref loadedActions.Name, 32);
 
@@ -282,7 +300,7 @@ public class OpenerCreatorWindow : Window, IDisposable
             actionsIds.AddRange(GroupOfActions.GetFilteredGroups(searchAction, jobFilter, actionTypeFilter));
         }
 
-        ImGui.Text($"{actionsIds.Count} Results");
+        ImGui.TextUnformatted($"{actionsIds.Count} Results");
         ImGui.SameLine();
         if (ImGui.Button("Add catch-all action"))
         {
@@ -307,38 +325,39 @@ public class OpenerCreatorWindow : Window, IDisposable
 
             ImGui.SameLine();
             if (actionId >= 0)
-                ImGui.Text($"{PvEActions.Instance.GetAction((uint)actionId).Name}");
+                ImGui.TextUnformatted($"{PvEActions.Instance.GetAction((uint)actionId).Name}");
             else if (GroupOfActions.TryGetDefault(actionId, out var group))
-                ImGui.Text($"{group.Name}");
+                ImGui.TextUnformatted($"{group.Name}");
             else
-                ImGui.Text($"Invalid action id ({actionId})");
+                ImGui.TextUnformatted($"Invalid action id ({actionId})");
         }
 
         if (actionsIds.Count > 50)
-            ImGui.Text("More than 50 results, limiting results shown");
-
-        ImGui.EndChild();
-        ImGui.EndTabItem();
+            ImGui.TextUnformatted("More than 50 results, limiting results shown");
     }
 
     private void DrawRecordActionsTab()
     {
-        if (!ImGui.BeginTabItem("Record Actions"))
+        using var tabItem = ImRaii.TabItem("Record Actions");
+        if (!tabItem.Success)
             return;
 
-        ImGui.BeginChild("###RecordActions");
-        ImGui.Text("Start a countdown, record your actions and compare them with your opener");
+        using var child = ImRaii.Child("###RecordActions");
+        if (!child.Success)
+            return;
+
+        ImGui.TextUnformatted("Start a countdown, record your actions and compare them with your opener");
         ImGui.Spacing();
         if (ImGui.Button("Start Recording"))
         {
             loadedActions.ClearWrongActions();
             countdown.StartCountdown();
-            recordingConfig.StartRecording(OpenerCreator.Config.CountdownTime,
+            recordingConfig.StartRecording(Plugin.Config.CountdownTime,
                                            AddFeedback,
                                            loadedActions.AddWrongActionAt,
                                            loadedActions.UpdateCurrentAction,
-                                           OpenerCreator.Config.IgnoreTrueNorth && !loadedActions.HasTrueNorth());
-            OpenerCreator.PluginLog.Info($"Is recording? {recordingConfig.IsRecording()}");
+                                           Plugin.Config.IgnoreTrueNorth && !loadedActions.HasTrueNorth());
+            Plugin.PluginLog.Info($"Is recording? {recordingConfig.IsRecording()}");
         }
 
         ImGui.SameLine();
@@ -358,26 +377,26 @@ public class OpenerCreatorWindow : Window, IDisposable
         if (recordingConfig.IsRecording())
         {
             ImGui.SameLine();
-            ImGui.Text("RECORDING");
+            ImGui.TextUnformatted("RECORDING");
         }
 
         foreach (var line in recordingConfig.GetFeedback())
-            ImGui.Text(line);
-
-        ImGui.EndChild();
-        ImGui.EndTabItem();
+            ImGui.TextUnformatted(line);
     }
 
     private static void DrawInfoTab()
     {
-        if (!ImGui.BeginTabItem("Info"))
+        using var tabItem = ImRaii.TabItem("Info");
+        if (!tabItem.Success)
             return;
 
-        ImGui.Text("Supported actions' groups:");
-        foreach (var groupsName in GroupOfActions.GroupsNames) ImGui.Text($"- {groupsName}");
-        ImGui.BeginChild("###Info");
-        ImGui.EndChild();
-        ImGui.EndTabItem();
+        ImGui.TextUnformatted("Supported actions' groups:");
+        foreach (var groupsName in GroupOfActions.GroupsNames)
+            ImGui.TextUnformatted($"- {groupsName}");
+
+        using var child = ImRaii.Child("###Info");
+        if (!child.Success)
+            return;
     }
 
     private void DrawClearActionsAndFeedback()
@@ -407,7 +426,7 @@ public class OpenerCreatorWindow : Window, IDisposable
         if (saveOpenerInvalidConfig)
         {
             ImGui.SameLine();
-            ImGui.Text("Error saving opener. Make sure you have selected your job and named the opener.");
+            ImGui.TextUnformatted("Error saving opener. Make sure you have selected your job and named the opener.");
         }
     }
 
@@ -427,16 +446,12 @@ public class OpenerCreatorWindow : Window, IDisposable
         void DrawJobCategoryToggle(string label, JobCategory jobCategory)
         {
             var active = jobRoleFilterColour[jobCategory];
-            if (active)
-                ImGui.PushStyleColor(ImGuiCol.Button, ImGui.GetStyle().Colors[(int)ImGuiCol.TabActive]);
-
+            using var color = ImRaii.PushColor(ImGuiCol.Button, ImGui.GetColorU32(ImGuiCol.TabActive), active);
             if (ImGui.Button(label))
             {
                 jobCategoryFilter = JobsExtensions.Toggle(jobCategoryFilter, jobCategory);
                 jobRoleFilterColour[jobCategory] = !active;
             }
-
-            if (active) ImGui.PopStyleColor(1);
         }
     }
 
@@ -507,17 +522,18 @@ public class OpenerCreatorWindow : Window, IDisposable
 
     public void ListFilter<TA>(string label, TA filter, Func<TA, String> prettyPrint, ref TA state) where TA : Enum
     {
-        if (ImGui.BeginCombo(label, prettyPrint(filter)))
-        {
-            foreach (TA value in Enum.GetValues(typeof(TA)))
-                if (ImGui.Selectable(prettyPrint(value)))
-                {
-                    state = value;
-                    actionsIds =
-                        PvEActions.Instance.GetNonRepeatedActionsByName(searchAction, jobFilter, actionTypeFilter);
-                }
+        using var combo = ImRaii.Combo(label, prettyPrint(filter));
+        if (!combo.Success)
+            return;
 
-            ImGui.EndCombo();
+        foreach (TA value in Enum.GetValues(typeof(TA)))
+        {
+            if (ImGui.Selectable(prettyPrint(value)))
+            {
+                state = value;
+                actionsIds =
+                    PvEActions.Instance.GetNonRepeatedActionsByName(searchAction, jobFilter, actionTypeFilter);
+            }
         }
     }
 
