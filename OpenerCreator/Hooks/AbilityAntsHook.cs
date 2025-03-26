@@ -10,12 +10,10 @@ public unsafe class AbilityAntsHook
 
     public AbilityAntsHook()
     {
-        IsActionHighlightedHook =
-            Plugin.GameInteropProvider.HookFromAddress<ActionManager.Delegates.IsActionHighlighted>(
-                ActionManager.MemberFunctionPointers.IsActionHighlighted, HandleIsActionHighlighted);
+        IsActionHighlightedHook = Plugin.GameInteropProvider.HookFromAddress<ActionManager.Delegates.IsActionHighlighted>(ActionManager.MemberFunctionPointers.IsActionHighlighted, HandleIsActionHighlighted);
     }
 
-    public int CurrentAction { get; set; } = 0;
+    public int CurrentAction { get; set; }
 
     public void Enable()
     {

@@ -11,16 +11,14 @@ public class PvEActions : IActionManager
 {
     private static PvEActions? SingletonInstance;
     private static readonly object LockObject = new();
-    private readonly IEnumerable<Action> actionsSheet;
-    private readonly Dictionary<uint, Action> actionsSheetDictionary;
+    private readonly IEnumerable<Action> PveActions;
+    private readonly Dictionary<uint, Action> PveActionDict;
 
     private PvEActions()
     {
-        var pve = Plugin.DataManager.GetExcelSheet<Action>()
-                               .Where(IsPvEAction)
-                               .ToList();
-        actionsSheetDictionary = pve.ToDictionary(a => a.RowId);
-        actionsSheet = pve;
+        var pve = Sheets.ActionSheet.Where(IsPvEAction).ToList();
+        PveActionDict = pve.ToDictionary(a => a.RowId);
+        PveActions = pve;
     }
 
     public static uint TrueNorthId => 7546;
@@ -46,7 +44,7 @@ public class PvEActions : IActionManager
         return id >= 0
                    ? id == IActionManager.CatchAllActionId
                          ? IActionManager.CatchAllActionName
-                         : actionsSheetDictionary.TryGetValue((uint)id, out var actionRow)
+                         : PveActionDict.TryGetValue((uint)id, out var actionRow)
                              ? actionRow.Name.ExtractText()
                              : IActionManager.OldActionName
                    : GroupOfActions.TryGetDefault(id, out var group)
@@ -62,7 +60,7 @@ public class PvEActions : IActionManager
     public bool IsActionOGCD(int id)
     {
         return id >= 0
-                   ? id != IActionManager.CatchAllActionId && actionsSheetDictionary.TryGetValue(
+                   ? id != IActionManager.CatchAllActionId && PveActionDict.TryGetValue(
                                                                (uint)id, out var action)
                                                            && ActionTypesExtension.GetType(action) == ActionTypes.OGCD
                    : GroupOfActions.TryGetDefault(id, out var group)
@@ -71,7 +69,7 @@ public class PvEActions : IActionManager
 
     public List<int> ActionsIdList(ActionTypes actionType)
     {
-        return actionsSheet
+        return PveActions
                .Where(a => ActionTypesExtension.GetType(a) == actionType || actionType == ActionTypes.ANY)
                .Select(a => (int)a.RowId)
                .ToList();
@@ -79,14 +77,14 @@ public class PvEActions : IActionManager
 
     public Action GetAction(uint id)
     {
-        return actionsSheetDictionary[id];
+        return PveActionDict[id];
     }
 
     public ushort? GetActionIcon(uint id)
     {
         return id == IActionManager.CatchAllActionId
                    ? IActionManager.GetCatchAllIcon
-                   : actionsSheetDictionary.TryGetValue(id, out var action)
+                   : PveActionDict.TryGetValue(id, out var action)
                        ? action.Icon
                        : null;
     }
@@ -94,7 +92,7 @@ public class PvEActions : IActionManager
 
     public List<int> GetNonRepeatedActionsByName(string name, Jobs job, ActionTypes actionType)
     {
-        return actionsSheet
+        return PveActions
                .AsParallel()
                .Where(a =>
                           a.Name.ToString().Contains(name, StringComparison.CurrentCultureIgnoreCase)

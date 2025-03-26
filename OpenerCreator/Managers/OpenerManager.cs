@@ -12,14 +12,14 @@ public class OpenerManager(IActionManager actions)
 {
     private static OpenerManager? SingletonInstance;
     private static readonly object LockObject = new();
-    private readonly Dictionary<Jobs, Dictionary<string, List<int>>> defaultOpeners = new();
-    private readonly Dictionary<Jobs, Dictionary<string, List<int>>> openers = new();
+    private readonly Dictionary<Jobs, Dictionary<string, List<int>>> DefaultOpeners = new();
+    private readonly Dictionary<Jobs, Dictionary<string, List<int>>> Openers = new();
 
     private OpenerManager(IActionManager actions, ValueTuple _) : this(actions)
     {
         OpenersFile = Path.Combine(Plugin.PluginInterface.ConfigDirectory.FullName, "openers.json");
-        openers = LoadOpeners(OpenersFile);
-        defaultOpeners = LoadOpeners(Path.Combine(Plugin.PluginInterface.AssemblyLocation.Directory!.FullName,
+        Openers = LoadOpeners(OpenersFile);
+        DefaultOpeners = LoadOpeners(Path.Combine(Plugin.PluginInterface.AssemblyLocation.Directory!.FullName,
                                                   "openers.json"));
     }
 
@@ -44,10 +44,10 @@ public class OpenerManager(IActionManager actions)
 
     public void AddOpener(string name, Jobs job, IEnumerable<int> opener)
     {
-        if (!openers.TryGetValue(job, out var value))
+        if (!Openers.TryGetValue(job, out var value))
         {
             value = new Dictionary<string, List<int>>();
-            openers[job] = value;
+            Openers[job] = value;
         }
 
         value[name] = [..opener];
@@ -55,30 +55,30 @@ public class OpenerManager(IActionManager actions)
 
     public List<Tuple<Jobs, List<string>>> GetDefaultNames()
     {
-        return defaultOpeners.Select(x => Tuple.Create(x.Key, x.Value.Keys.ToList())).ToList();
+        return DefaultOpeners.Select(x => Tuple.Create(x.Key, x.Value.Keys.ToList())).ToList();
     }
 
     public List<int> GetDefaultOpener(string name, Jobs job)
     {
-        return [..defaultOpeners[job][name]];
+        return [..DefaultOpeners[job][name]];
     }
 
     public List<int> GetOpener(string name, Jobs job)
     {
-        return [..openers[job][name]];
+        return [..Openers[job][name]];
     }
 
     public List<Tuple<Jobs, List<string>>> GetNames()
     {
-        return openers.Select(x => Tuple.Create(x.Key, x.Value.Keys.ToList())).ToList();
+        return Openers.Select(x => Tuple.Create(x.Key, x.Value.Keys.ToList())).ToList();
     }
 
     public void DeleteOpener(string name, Jobs job)
     {
-        if (openers.TryGetValue(job, out var value))
+        if (Openers.TryGetValue(job, out var value))
         {
             value.Remove(name);
-            if (value.Count == 0) openers.Remove(job);
+            if (value.Count == 0) Openers.Remove(job);
         }
     }
 
@@ -172,7 +172,7 @@ public class OpenerManager(IActionManager actions)
     {
         try
         {
-            var jsonData = JsonSerializer.Serialize(openers);
+            var jsonData = JsonSerializer.Serialize(Openers);
             File.WriteAllText(OpenersFile, jsonData);
         }
         catch (Exception ex)

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
-<Project Sdk="Dalamud.NET.SDK/11.0.0">
+<Project Sdk="Dalamud.NET.Sdk/12.0.2">
     <PropertyGroup>
-        <TargetFramework>net8.0-windows</TargetFramework>
+        <TargetFramework>net9.0-windows</TargetFramework>
         <Platforms>x64</Platforms>
         <Nullable>enable</Nullable>
         <LangVersion>latest</LangVersion>
@@ -14,7 +14,7 @@
 
     <PropertyGroup>
         <Authors>Infi, herulume, sevii</Authors>
-        <Version>0.3.2</Version>
+        <Version>0.4.0</Version>
         <Description>Create your opener and practice with a striking dummy. Provides basic analysis.</Description>
         <PackageProjectUrl>https://github.com/Infiziert90/OpenerCreator</PackageProjectUrl>
         <PackageLicenseExpression>AGPL-3.0-or-later</PackageLicenseExpression>

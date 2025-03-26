@@ -1,7 +1,7 @@
 {
   "version": 1,
   "dependencies": {
-    "net8.0-windows7.0": {
+    "net9.0-windows7.0": {
       "coverlet.collector": {
         "type": "Direct",
         "requested": "[6.0.3, )",
@@ -37,8 +37,8 @@
       },
       "DalamudPackager": {
         "type": "Transitive",
-        "resolved": "11.0.0",
-        "contentHash": "bjT7XUlhIJSmsE/O76b7weUX+evvGQctbQB8aKXt94o+oPWxHpCepxAGMs7Thow3AzCyqWs7cOpp9/2wcgRRQA=="
+        "resolved": "12.0.0",
+        "contentHash": "J5TJLV3f16T/E2H2P17ClWjtfEBPpq3yxvqW46eN36JCm6wR+EaoaYkqG9Rm5sHqs3/nK/vKjWWyvEs/jhKoXw=="
       },
       "Microsoft.CodeCoverage": {
         "type": "Transitive",
@@ -115,7 +115,7 @@
       "openercreator": {
         "type": "Project",
         "dependencies": {
-          "DalamudPackager": "[11.0.0, )"
+          "DalamudPackager": "[12.0.0, )"
         }
       }
     }
