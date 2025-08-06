@@ -34,15 +34,15 @@ public sealed class Plugin : IDalamudPlugin
         Config = Configuration.Load();
 
         ConfigWindow = new ConfigWindow();
-        OpenerCreatorWindow = new OpenerCreatorWindow(UsedActionHook.StartRecording, UsedActionHook.StopRecording,
+        OpenerCreatorWindow = new OpenerCreatorWindow(this, UsedActionHook.StartRecording, UsedActionHook.StopRecording,
                                                       AbilityAntsHook.Enable, AbilityAntsHook.Disable,
                                                       a => AbilityAntsHook.CurrentAction = a);
         WindowSystem.AddWindow(ConfigWindow);
         WindowSystem.AddWindow(OpenerCreatorWindow);
 
         PluginInterface.UiBuilder.Draw += WindowSystem.Draw;
-        PluginInterface.UiBuilder.OpenConfigUi += () => ConfigWindow.Toggle();
-        PluginInterface.UiBuilder.OpenMainUi += () => OpenerCreatorWindow.Toggle();
+        PluginInterface.UiBuilder.OpenMainUi += OpenMainUi;
+        PluginInterface.UiBuilder.OpenConfigUi += OpenConfigUi;
 
         CommandManager.AddHandler(Command, new CommandInfo(OnCommand)
         {
@@ -57,6 +57,10 @@ public sealed class Plugin : IDalamudPlugin
         ConfigWindow.Dispose();
         OpenerCreatorWindow.Dispose();
         AbilityAntsHook.Dispose();
+
+        PluginInterface.UiBuilder.Draw -= WindowSystem.Draw;
+        PluginInterface.UiBuilder.OpenMainUi -= OpenMainUi;
+        PluginInterface.UiBuilder.OpenConfigUi -= OpenConfigUi;
     }
 
     private void OnCommand(string command, string args)
@@ -66,4 +70,7 @@ public sealed class Plugin : IDalamudPlugin
         else
             OpenerCreatorWindow.Toggle();
     }
+
+    public void OpenConfigUi() => ConfigWindow.Toggle();
+    public void OpenMainUi() => OpenerCreatorWindow.Toggle();
 }

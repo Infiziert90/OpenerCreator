@@ -6,6 +6,7 @@ using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
 using Dalamud.Interface.Windowing;
 using Dalamud.Bindings.ImGui;
+using Dalamud.Interface;
 using OpenerCreator.Actions;
 using OpenerCreator.Helpers;
 using OpenerCreator.Managers;
@@ -14,6 +15,8 @@ namespace OpenerCreator.Windows;
 
 public class OpenerCreatorWindow : Window, IDisposable
 {
+    private readonly Plugin Plugin;
+
     private static readonly Vector2 IconSize = new(32);
 
     private readonly Dictionary<JobCategory, bool> jobRoleFilterColour = new()
@@ -40,10 +43,13 @@ public class OpenerCreatorWindow : Window, IDisposable
     private string searchAction = "";
 
     public OpenerCreatorWindow(
+        Plugin plugin,
         Action<int, Action<Feedback>, Action<int>, Action<int>, bool, Action<int>> startRecording, Action stopRecording,
         Action enableAbilityAnts, Action disableAbilityAnts, Action<int> updateAbilityAnts)
         : base("Opener Creator###ocrt", ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoScrollWithMouse)
     {
+        Plugin = plugin;
+
         ForceMainWindow = true; // Centre countdown
         SizeConstraints = new WindowSizeConstraints
         {
@@ -54,6 +60,12 @@ public class OpenerCreatorWindow : Window, IDisposable
         actionsIds = PvEActions.Instance.ActionsIdList(actionTypeFilter);
         recordingConfig = new Recording(startRecording, stopRecording, enableAbilityAnts, disableAbilityAnts,
                                         updateAbilityAnts);
+
+        TitleBarButtons.Add(new TitleBarButton
+        {
+            Icon = FontAwesomeIcon.Cog,
+            Click = _ => { Plugin.OpenConfigUi(); }
+        });
     }
 
     public void Dispose()
