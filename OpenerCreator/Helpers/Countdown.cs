@@ -4,7 +4,7 @@ using System.Numerics;
 using Dalamud.Game;
 using Dalamud.Game.ClientState.Objects.Enums;
 using Dalamud.Interface.Textures;
-using ImGuiNET;
+using Dalamud.Bindings.ImGui;
 
 namespace OpenerCreator.Helpers;
 
@@ -34,8 +34,7 @@ internal struct Countdown()
     internal void DrawCountdown()
     {
         if (Plugin.Config.IsCountdownEnabled == false || countdownStart == null ||
-            Plugin.ClientState.LocalPlayer!.StatusFlags.ToString()
-                         .Contains(StatusFlags.InCombat.ToString()))
+            Plugin.ClientState.LocalPlayer!.StatusFlags.ToString().Contains(nameof(StatusFlags.InCombat)))
             return;
 
         var foregroundDrawList = ImGui.GetForegroundDrawList();
@@ -63,13 +62,13 @@ internal struct Countdown()
         switch (timer)
         {
             case <= 0:
-                foregroundDrawList.AddImage(countdownGo.GetWrapOrEmpty().ImGuiHandle,
+                foregroundDrawList.AddImage(countdownGo.GetWrapOrEmpty().Handle,
                                             center - (countdownGo.GetWrapOrEmpty().Size / 2),
                                             center + (countdownGo.GetWrapOrEmpty().Size / 2), Vector2.Zero, Vector2.One,
                                             color);
                 break;
             case <= 5:
-                foregroundDrawList.AddImage(countdownNumbers.GetWrapOrEmpty().ImGuiHandle,
+                foregroundDrawList.AddImage(countdownNumbers.GetWrapOrEmpty().Handle,
                                             center - (CountdownNumberSize / 2),
                                             center + (CountdownNumberSize / 2), new Vector2(ceil * uSpacing, 0.0f),
                                             new Vector2((ceil * uSpacing) + uSpacing, 1.0f), color);
@@ -78,13 +77,13 @@ internal struct Countdown()
             {
                 var dig1 = (int)Math.Floor(ceil / 10.0f);
                 var dig2 = ceil % 10;
-                foregroundDrawList.AddImage(countdownNumbers.GetWrapOrEmpty().ImGuiHandle,
+                foregroundDrawList.AddImage(countdownNumbers.GetWrapOrEmpty().Handle,
                                             center - CountdownNumberSize with { Y = CountdownNumberSize.Y / 2 },
                                             center + new Vector2(0.0f, CountdownNumberSize.Y / 2),
                                             new Vector2(dig1 * uSpacing, 0.0f),
                                             new Vector2((dig1 * uSpacing) + uSpacing, 1.0f),
                                             color);
-                foregroundDrawList.AddImage(countdownNumbers.GetWrapOrEmpty().ImGuiHandle,
+                foregroundDrawList.AddImage(countdownNumbers.GetWrapOrEmpty().Handle,
                                             center - new Vector2(0.0f, CountdownNumberSize.Y / 2),
                                             center + CountdownNumberSize with { Y = CountdownNumberSize.Y / 2 },
                                             new Vector2(dig2 * uSpacing, 0.0f),

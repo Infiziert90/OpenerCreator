@@ -1,5 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
-<Project Sdk="Dalamud.NET.Sdk/12.0.2">
+<Project Sdk="Dalamud.NET.Sdk/13.0.0">
+    <PropertyGroup>
+        <Authors>Infi, herulume, sevii</Authors>
+        <Version>0.4.0</Version>
+        <Description>Create your opener and practice with a striking dummy. Provides basic analysis.</Description>
+        <PackageProjectUrl>https://github.com/Infiziert90/OpenerCreator</PackageProjectUrl>
+        <PackageLicenseExpression>AGPL-3.0-or-later</PackageLicenseExpression>
+        <IsPackable>false</IsPackable>
+    </PropertyGroup>
+
     <PropertyGroup>
         <TargetFramework>net9.0-windows</TargetFramework>
         <Platforms>x64</Platforms>
@@ -10,15 +19,6 @@
         <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
         <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
         <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
-    </PropertyGroup>
-
-    <PropertyGroup>
-        <Authors>Infi, herulume, sevii</Authors>
-        <Version>0.4.0</Version>
-        <Description>Create your opener and practice with a striking dummy. Provides basic analysis.</Description>
-        <PackageProjectUrl>https://github.com/Infiziert90/OpenerCreator</PackageProjectUrl>
-        <PackageLicenseExpression>AGPL-3.0-or-later</PackageLicenseExpression>
-        <IsPackable>false</IsPackable>
     </PropertyGroup>
 
     <ItemGroup>
